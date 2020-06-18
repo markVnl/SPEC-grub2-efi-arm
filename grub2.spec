@@ -14,29 +14,28 @@
 # Figure out the right file path to use
 %global efidir %(eval echo $(grep ^ID= /etc/os-release | sed -e 's/^ID=//' -e 's/rhel/redhat/'))
 
-%global githash f3f8347
+%global githash na
 %undefine _missing_build_ids_terminate_build
 
 Name:           grub2
-Epoch:          2
-# grub-2.02-191-gf3f8347569
-Version:        2.02.191
-Release:        1
+Epoch:          1
+Version:        2.04
+Release:        1%{?dist}
 Summary:        Bootloader with support for Linux, Multiboot and more
 
 Group:          System Environment/Base
 License:        GPLv3+
 URL:            http://www.gnu.org/software/grub/
-Source0:        grub-g%{githash}.tar.gz
+Source0:        https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
 
-Patch1:       0001-Fix-bad-test-on-GRUB_DISABLE_SUBMENU.patch
-Patch2:       0002-Honor-a-symlink-when-generating-configuration-by-gru.patch
-Patch3:       0003-Don-t-say-GNU-Linux-in-generated-menus.patch
+Patch1:        0001-Fix-bad-test-on-GRUB_DISABLE_SUBMENU.patch
+Patch2:        0002-Honor-a-symlink-when-generating-configuration-by-gru.patch
+Patch3:        0003-Don-t-say-GNU-Linux-in-generated-menus.patch
 
-BuildRequires:  flex bison binutils python
-BuildRequires:  ncurses-devel xz-devel bzip2-devel
-BuildRequires:  freetype-devel libusb-devel
-BuildRequires:	rpm-devel
+BuildRequires: flex bison binutils python
+BuildRequires: ncurses-devel xz-devel bzip2-devel
+BuildRequires: freetype-devel libusb-devel
+BuildRequires: rpm-devel
 %ifarch %{sparc} x86_64 aarch64 ppc64le
 # sparc builds need 64 bit glibc-devel - also for 32 bit userland
 BuildRequires:  /usr/lib64/crt1.o glibc-static
@@ -45,19 +44,19 @@ BuildRequires:  /usr/lib64/crt1.o glibc-static
 BuildRequires:  /usr/lib/crt1.o glibc-static
 %endif
 BuildRequires:  autoconf automake autogen device-mapper-devel
-BuildRequires:	freetype-devel gettext-devel git
-BuildRequires:	texinfo
-BuildRequires:	dejavu-sans-fonts
-BuildRequires:	help2man
+BuildRequires:  freetype-devel gettext-devel git
+BuildRequires:  texinfo
+BuildRequires:  dejavu-sans-fonts
+BuildRequires:  help2man
 
-Requires:	gettext which file
-Requires:	%{name}-tools = %{epoch}:%{version}-%{release}
-Requires:	os-prober >= 1.58-11
+Requires:       gettext which file
+Requires:       %{name}-tools = %{epoch}:%{version}-%{release}
+Requires:       os-prober >= 1.58-11
 Requires(pre):  dracut
 Requires(post): dracut
 
-ExcludeArch:	s390 s390x
-Obsoletes:	grub2 <= 1:2.00-20%{?dist}
+ExcludeArch:    s390 s390x
+Obsoletes:      grub2 <= 1:2.00-20%{?dist}
 
 %description
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -66,10 +65,10 @@ file systems, computer architectures and hardware devices.  This subpackage
 provides support for PC BIOS systems.
 
 %package efi
-Summary:	GRUB for EFI systems.
-Group:		System Environment/Base
-Requires:	%{name}-tools = %{epoch}:%{version}-%{release}
-Obsoletes:	grub2-efi <= 1:2.00-20%{?dist}
+Summary:       GRUB for EFI systems.
+Group:         System Environment/Base
+Requires:      %{name}-tools = %{epoch}:%{version}-%{release}
+Obsoletes:     grub2-efi <= 1:2.00-20%{?dist}
 
 %description efi
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -78,10 +77,10 @@ file systems, computer architectures and hardware devices.  This subpackage
 provides support for EFI systems.
 
 %package efi-modules
-Summary:	Modules used to build custom grub.efi images
-Group:		System Environment/Base
-Requires:	%{name}-tools = %{epoch}:%{version}-%{release}
-Obsoletes:	grub2-efi <= 1:2.00-20%{?dist}
+Summary:       Modules used to build custom grub.efi images
+Group:         System Environment/Base
+Requires:      %{name}-tools = %{epoch}:%{version}-%{release}
+Obsoletes:     grub2-efi <= 1:2.00-20%{?dist}
 
 %description efi-modules
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -90,12 +89,12 @@ file systems, computer architectures and hardware devices.  This subpackage
 provides support for rebuilding your own grub.efi on EFI systems.
 
 %package tools
-Summary:	Support tools for GRUB.
-Group:		System Environment/Base
-Requires:	gettext os-prober which file system-logos
-Requires:       grubby-deprecated
-Provides:       %{name}-common
-Provides:       %{name}-tools-minimal
+Summary:       Support tools for GRUB.
+Group:         System Environment/Base
+Requires:      gettext os-prober which file system-logos
+Requires:      grubby-deprecated
+Provides:      %{name}-common = %{epoch}:%{version}-%{release}
+Provides:      %{name}-tools-minimal = %{epoch}:%{version}-%{release}
 
 %description tools
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -104,49 +103,50 @@ file systems, computer architectures and hardware devices.  This subpackage
 provides tools for support of all platforms.
 
 %prep
-%setup -n grub-g%{githash}
+%setup -q -n grub-%{version}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 
 %build
 ./autogen.sh
-%configure							\
-	CFLAGS="-Os -g"						\
-	TARGET_LDFLAGS=-static					\
-        --with-platform=efi					\
-	--with-grubdir=%{name}					\
-        --program-transform-name=s,grub,%{name},		\
-	--disable-grub-mount					\
-	--disable-werror
+%configure                     \
+   CFLAGS="-Os -g"             \
+   TARGET_LDFLAGS=-static      \
+        --with-platform=efi    \
+        --with-grubdir=%{name} \
+        --program-transform-name=s,grub,%{name}, \
+        --disable-grub-mount   \
+        --disable-werror
+
 make %{?_smp_mflags}
 
-GRUB_MODULES="	all_video boot btrfs cat chain configfile echo \
-		efifwsetup efinet ext2 fat font gfxmenu gfxterm gzio halt \
-		hfsplus iso9660 jpeg loadenv loopback lvm mdraid09 mdraid1x \
-		minicmd normal part_apple part_msdos part_gpt \
-		password_pbkdf2 png \
-		reboot search search_fs_uuid search_fs_file search_label \
-		serial sleep syslinuxcfg test tftp video xfs"
+GRUB_MODULES=" all_video boot btrfs cat chain configfile echo \
+        efifwsetup efinet ext2 fat font gfxmenu gfxterm gzio halt \
+        hfsplus iso9660 jpeg loadenv loopback lvm mdraid09 mdraid1x \
+        minicmd normal part_apple part_msdos part_gpt \
+        password_pbkdf2 png \
+        reboot search search_fs_uuid search_fs_file search_label \
+        serial sleep syslinuxcfg test tftp video xfs"
 GRUB_MODULES+=" linux "
 ./grub-mkimage -O %{grubefiarch} -o %{grubefiname} -p /EFI/%{efidir} \
-		-d grub-core ${GRUB_MODULES}
+        -d grub-core ${GRUB_MODULES}
 ./grub-mkimage -O %{grubefiarch} -o %{grubeficdname} -p /EFI/BOOT \
-		-d grub-core ${GRUB_MODULES}
+        -d grub-core ${GRUB_MODULES}
 
 sed -i -e 's,(grub),(%{name}),g' \
-	-e 's,grub.info,%{name}.info,g' \
-	-e 's,\* GRUB:,* GRUB2:,g' \
-	-e 's,/boot/grub/,/boot/%{name}/,g' \
-	-e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
-	docs/grub.info
+    -e 's,grub.info,%{name}.info,g' \
+    -e 's,\* GRUB:,* GRUB2:,g' \
+    -e 's,/boot/grub/,/boot/%{name}/,g' \
+    -e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
+    docs/grub.info
 sed -i -e 's,grub-dev,%{name}-dev,g' docs/grub-dev.info
 
 /usr/bin/makeinfo --html --no-split -I docs -o grub-dev.html docs/grub-dev.texi
 /usr/bin/makeinfo --html --no-split -I docs -o grub.html docs/grub.texi
-sed -i	-e 's,/boot/grub/,/boot/%{name}/,g' \
-	-e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
-	grub.html
+sed -i -e 's,/boot/grub/,/boot/%{name}/,g' \
+    -e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
+    grub.html
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
@@ -191,23 +191,23 @@ cp -a ${RPM_BUILD_ROOT}/usr/bin %{finddebugroot}/usr/bin
 cp -a ${RPM_BUILD_ROOT}/usr/sbin %{finddebugroot}/usr/sbin
 
 %global dip RPM_BUILD_ROOT=%{finddebugroot} %{__debug_install_post}
-%define __debug_install_post ( %{dip}					\
-	install -m 0755 -d %{buildroot}/usr/lib/ %{buildroot}/usr/src/	\
-	cp -al %{finddebugroot}/usr/lib/debug/				\\\
-		%{buildroot}/usr/lib/debug/				\
-	cp -al %{finddebugroot}/usr/src/debug/				\\\
-		%{buildroot}/usr/src/debug/ )
+%define __debug_install_post ( %{dip}                               \
+    install -m 0755 -d %{buildroot}/usr/lib/ %{buildroot}/usr/src/  \
+    cp -al %{finddebugroot}/usr/lib/debug/                          \\\
+        %{buildroot}/usr/lib/debug/                                 \
+    cp -al %{finddebugroot}/usr/src/debug/                          \\\
+        %{buildroot}/usr/src/debug/ )
 
 %post tools
 if [ "$1" = 1 ]; then
-	/sbin/install-info --info-dir=%{_infodir} %{_infodir}/%{name}.info.gz || :
-	/sbin/install-info --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
+    /sbin/install-info --info-dir=%{_infodir} %{_infodir}/%{name}.info.gz || :
+    /sbin/install-info --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
 fi
 
 %preun tools
 if [ "$1" = 0 ]; then
-	/sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}.info.gz || :
-	/sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
+    /sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}.info.gz || :
+    /sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
 fi
 
 %files efi
