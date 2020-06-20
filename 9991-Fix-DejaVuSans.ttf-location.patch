@@ -1,0 +1,25 @@
+From c4e349b790331ddc5b9a2de1705b3d380ee614b6 Mon Sep 17 00:00:00 2001
+From: Mark Verlinde <mark@havak.nl>
+Date: Tue, 16 Jun 2020 21:04:52 +0200
+Subject: [PATCH] Fix DejaVuSans.ttf location
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 7656f24..20648c3 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1649,7 +1649,7 @@ fi
+ 
+ if test x"$starfield_excuse" = x; then
+    for ext in pcf pcf.gz bdf bdf.gz ttf ttf.gz; do
+-     for dir in . /usr/src /usr/share/fonts/X11/misc /usr/share/fonts/truetype/ttf-dejavu /usr/share/fonts/dejavu /usr/share/fonts/truetype; do
++     for dir in . /usr/src /usr/share/fonts/X11/misc /usr/share/fonts/truetype/ttf-dejavu /usr/share/fonts/dejavu /usr/share/fonts/TTF/dejavu /usr/share/fonts/truetype; do
+         if test -f "$dir/DejaVuSans.$ext"; then
+           DJVU_FONT_SOURCE="$dir/DejaVuSans.$ext"
+           break 2
+-- 
+2.27.0
+
