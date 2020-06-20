@@ -4,11 +4,13 @@
 %global grubefiarch arm64-efi
 %global grubefiname grubaa64.efi
 %global grubeficdname gcdaa64.efi
+%global grububootname BOOTAA64.EFI
 %endif
 %ifarch armv7hl
 %global grubefiarch arm-efi
 %global grubefiname grubarm.efi
 %global grubeficdname gcdarm.efi
+%global grububootname BOOTARM.EFI
 %endif
 
 # Figure out the right file path to use
@@ -161,7 +163,7 @@ install -m 755 %{grubefiname} $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/%{grubefina
 install -m 755 %{grubeficdname} $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/%{grubeficdname}
 
 install -m 755 -d $RPM_BUILD_ROOT/boot/efi/EFI/BOOT/
-install -m 755 %{grubefiname} $RPM_BUILD_ROOT/boot/efi/EFI/BOOT/BOOTARM.EFI
+install -m 755 %{grubefiname} $RPM_BUILD_ROOT/boot/efi/EFI/BOOT/%{grububootname}
 
 # Make selinux happy with exec stack binaries.
 mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}/prelink.conf.d/
