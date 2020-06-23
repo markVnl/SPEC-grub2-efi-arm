@@ -1,4 +1,6 @@
 %undefine _hardened_build
+%undefine _missing_build_ids_terminate_build
+%global githash na
 
 %ifarch aarch64
 %global grubefiarch arm64-efi
@@ -16,8 +18,6 @@
 # Figure out the right file path to use
 %global efidir %(eval echo $(grep ^ID= /etc/os-release | sed -e 's/^ID=//' -e 's/rhel/redhat/'))
 
-%global githash na
-%undefine _missing_build_ids_terminate_build
 
 Name:          grub2
 Epoch:         1
@@ -29,10 +29,30 @@ Group:         System Environment/Base
 License:       GPLv3+
 URL:           http://www.gnu.org/software/grub/
 Source0:       https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
+Source1:       unifont-5.1.20080820.pcf.gz
+Source2:       custom.cfg
 
-Patch1:        0001-Fix-bad-test-on-GRUB_DISABLE_SUBMENU.patch
-Patch2:        0002-Honor-a-symlink-when-generating-configuration-by-gru.patch
-Patch3:        0003-Don-t-say-GNU-Linux-in-generated-menus.patch
+# Fedora Patches
+Patch0011:     0011-Honor-a-symlink-when-generating-configuration-by-gru.patch
+Patch0012:     0012-Move-bash-completion-script-922997.patch
+Patch0013:     0013-Update-to-minilzo-2.08.patch
+Patch0020:     0020-Fix-bad-test-on-GRUB_DISABLE_SUBMENU.patch
+# do not need 0028, it's here for appliance with the next patch
+Patch0028:     0028-Add-devicetree-loading.patch  
+Patch0029:     0029-Don-t-write-messages-to-the-screen.patch
+Patch0030:     0030-Don-t-print-GNU-GRUB-header.patch
+Patch0031:     0031-Don-t-add-to-highlighted-row.patch
+Patch0032:     0032-Message-string-cleanups.patch
+Patch0033:     0033-Fix-border-spacing-now-that-we-aren-t-displaying-it.patch
+Patch0034:     0034-Use-the-correct-indentation-for-the-term-help-text.patch
+Patch0035:     0035-Indent-menu-entries.patch
+Patch0036:     0036-Fix-margins.patch
+Patch0037:     0037-Use-2-instead-of-1-for-our-right-hand-margin-so-line.patch
+Patch0038:     0038-Enable-pager-by-default.-985860.patch
+Patch0039:     0039-F10-doesn-t-work-on-serial-so-don-t-tell-the-user-to.patch
+Patch0040:     0040-Don-t-say-GNU-Linux-in-generated-menus.patch
+Patch0041:     0041-Don-t-draw-a-border-around-the-menu.patch
+Patch0042:     0042-Use-the-standard-margin-for-the-timeout-string.patch
 
 BuildRequires: flex bison binutils python
 BuildRequires: ncurses-devel xz-devel bzip2-devel
@@ -106,11 +126,8 @@ provides tools for support of all platforms.
 
 
 %prep
-%setup -q -n grub-%{version}
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-
+%autosetup -p1 -n grub-%{version}
+cp %{SOURCE1} unifont.pcf.gz
 
 %build
 ./autogen.sh
@@ -161,8 +178,11 @@ install -m 755 -d %{buildroot}/boot/efi/EFI/%{efidir}/
 touch %{buildroot}/boot/efi/EFI/%{efidir}/grub.cfg
 ln -s ../boot/efi/EFI/%{efidir}/grub.cfg %{buildroot}%{_sysconfdir}/%{name}-efi.cfg
 
-install -m 755 %{grubefiname} %{buildroot}/boot/efi/EFI/%{efidir}/%{grubefiname}
+# Custom config for console colors
+install -m 644 -D %{SOURCE2} %{buildroot}/boot/%{name}/custom.cfg
 
+# Pre-installed grub-efi stub
+install -m 755 %{grubefiname} %{buildroot}/boot/efi/EFI/%{efidir}/%{grubefiname}
 install -m 755 -d %{buildroot}/boot/efi/EFI/BOOT/
 install -m 755 %{grubefiname} %{buildroot}/boot/efi/EFI/BOOT/%{grububootname}
 
@@ -183,7 +203,7 @@ mv %{buildroot}%{_infodir}/grub-dev.info %{buildroot}%{_infodir}/%{name}-dev.inf
 rm %{buildroot}%{_infodir}/dir
 
 mkdir -p %{buildroot}/boot/efi/EFI/%{efidir} boot/%{name}
-ln -r -s ../efi/EFI/%{efidir}/grubenv %{buildroot}/boot/%{name}/grubenv
+ln -s ../efi/EFI/%{efidir}/grubenv %{buildroot}/boot/%{name}/grubenv
 
 # Don't run debuginfo on all the grub modules and whatnot; it just
 # rejects them, complains, and slows down extraction.
@@ -267,13 +287,14 @@ fi
 %{_bindir}/%{name}-render-label
 %{_bindir}/%{name}-script-check
 %{_bindir}/%{name}-syslinux2cfg
-%{_sysconfdir}/bash_completion.d/grub
+%{_datarootdir}/bash-completion/completions/grub
 %{_sysconfdir}/prelink.conf.d/%{name}.conf
 %attr(0700,root,root) %dir %{_sysconfdir}/grub.d
 %config %{_sysconfdir}/grub.d/??_*
 %{_sysconfdir}/grub.d/README
 %attr(0644,root,root) %ghost %config(noreplace) %{_sysconfdir}/default/grub
 %dir /boot/%{name}
+/boot/%{name}/custom.cfg
 %{_infodir}/%{name}*
 %{_datadir}/man/man?/*
 %doc COPYING INSTALL
