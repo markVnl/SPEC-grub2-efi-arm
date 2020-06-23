@@ -6,7 +6,7 @@
 %global grubeficdname gcdaa64.efi
 %global grububootname BOOTAA64.EFI
 %endif
-%ifarch armv7hl
+%ifarch %{arm}
 %global grubefiarch arm-efi
 %global grubefiname grubarm.efi
 %global grubeficdname gcdarm.efi
@@ -19,16 +19,16 @@
 %global githash na
 %undefine _missing_build_ids_terminate_build
 
-Name:           grub2
-Epoch:          1
-Version:        2.04
-Release:        1%{?dist}
-Summary:        Bootloader with support for Linux, Multiboot and more
+Name:          grub2
+Epoch:         1
+Version:       2.04
+Release:       1%{?dist}
+Summary:       Bootloader with support for Linux, Multiboot and more
 
-Group:          System Environment/Base
-License:        GPLv3+
-URL:            http://www.gnu.org/software/grub/
-Source0:        https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
+Group:         System Environment/Base
+License:       GPLv3+
+URL:           http://www.gnu.org/software/grub/
+Source0:       https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
 
 Patch1:        0001-Fix-bad-test-on-GRUB_DISABLE_SUBMENU.patch
 Patch2:        0002-Honor-a-symlink-when-generating-configuration-by-gru.patch
@@ -40,25 +40,25 @@ BuildRequires: freetype-devel libusb-devel
 BuildRequires: rpm-devel
 %ifarch %{sparc} x86_64 aarch64 ppc64le
 # sparc builds need 64 bit glibc-devel - also for 32 bit userland
-BuildRequires:  /usr/lib64/crt1.o glibc-static
+BuildRequires: /usr/lib64/crt1.o glibc-static
 %else
 # ppc64 builds need the ppc crt1.o
-BuildRequires:  /usr/lib/crt1.o glibc-static
+BuildRequires: /usr/lib/crt1.o glibc-static
 %endif
-BuildRequires:  autoconf automake autogen device-mapper-devel
-BuildRequires:  freetype-devel gettext-devel git
-BuildRequires:  texinfo
-BuildRequires:  dejavu-sans-fonts
-BuildRequires:  help2man
+BuildRequires: autoconf automake autogen device-mapper-devel
+BuildRequires: freetype-devel gettext-devel git
+BuildRequires: texinfo
+BuildRequires: dejavu-sans-fonts
+BuildRequires: help2man
 
-Requires:       gettext which file
-Requires:       %{name}-tools = %{epoch}:%{version}-%{release}
-Requires:       os-prober >= 1.58-11
-Requires(pre):  dracut
-Requires(post): dracut
+Requires:      gettext which file
+Requires:      %{name}-tools = %{epoch}:%{version}-%{release}
+Requires:      os-prober >= 1.58-11
+Requires(pre): dracut
+Requires(post):dracut
 
-ExcludeArch:    s390 s390x
-Obsoletes:      grub2 <= 1:2.00-20%{?dist}
+ExcludeArch:   s390 s390x
+Obsoletes:     %{name} <= 1:2.00-20%{?dist}
 
 %description
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -70,7 +70,7 @@ provides support for PC BIOS systems.
 Summary:       GRUB for EFI systems.
 Group:         System Environment/Base
 Requires:      %{name}-tools = %{epoch}:%{version}-%{release}
-Obsoletes:     grub2-efi <= 1:2.00-20%{?dist}
+Obsoletes:     %{name}-efi <= 1:2.00-20%{?dist}
 
 %description efi
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -82,7 +82,7 @@ provides support for EFI systems.
 Summary:       Modules used to build custom grub.efi images
 Group:         System Environment/Base
 Requires:      %{name}-tools = %{epoch}:%{version}-%{release}
-Obsoletes:     grub2-efi <= 1:2.00-20%{?dist}
+Obsoletes:     %{name}-efi <= 1:2.00-20%{?dist}
 
 %description efi-modules
 The GRand Unified Bootloader (GRUB) is a highly configurable and customizable
@@ -104,11 +104,13 @@ bootloader with modular architecture.  It support rich varietyof kernel formats,
 file systems, computer architectures and hardware devices.  This subpackage
 provides tools for support of all platforms.
 
+
 %prep
 %setup -q -n grub-%{version}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+
 
 %build
 ./autogen.sh
@@ -121,7 +123,7 @@ provides tools for support of all platforms.
         --disable-grub-mount   \
         --disable-werror
 
-make %{?_smp_mflags}
+%{make_build}
 
 GRUB_MODULES=" all_video boot btrfs cat chain configfile echo \
         efifwsetup efinet ext2 fat font gfxmenu gfxterm gzio halt \
@@ -131,14 +133,13 @@ GRUB_MODULES=" all_video boot btrfs cat chain configfile echo \
         reboot search search_fs_uuid search_fs_file search_label \
         serial sleep syslinuxcfg test tftp video xfs"
 GRUB_MODULES+=" linux "
+
 ./grub-mkimage -O %{grubefiarch} -o %{grubefiname} -p /EFI/%{efidir} \
-        -d grub-core ${GRUB_MODULES}
-./grub-mkimage -O %{grubefiarch} -o %{grubeficdname} -p /EFI/BOOT \
         -d grub-core ${GRUB_MODULES}
 
 sed -i -e 's,(grub),(%{name}),g' \
     -e 's,grub.info,%{name}.info,g' \
-    -e 's,\* GRUB:,* GRUB2:,g' \
+    -e 's,\* GRUB:,* %{name}:,g' \
     -e 's,/boot/grub/,/boot/%{name}/,g' \
     -e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
     docs/grub.info
@@ -150,47 +151,46 @@ sed -i -e 's,/boot/grub/,/boot/%{name}/,g' \
     -e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
     grub.html
 
+
 %install
-make DESTDIR=$RPM_BUILD_ROOT install
-find $RPM_BUILD_ROOT -iname "*.module" -exec chmod a-x {} \;
+%{make_build} DESTDIR=%{buildroot} install
+find %{buildroot} -iname "*.module" -exec chmod a-x {} \;
 
 # Ghost config file
-install -m 755 -d $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/
-touch $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/grub.cfg
-ln -s ../boot/efi/EFI/%{efidir}/grub.cfg $RPM_BUILD_ROOT%{_sysconfdir}/%{name}-efi.cfg
+install -m 755 -d %{buildroot}/boot/efi/EFI/%{efidir}/
+touch %{buildroot}/boot/efi/EFI/%{efidir}/grub.cfg
+ln -s ../boot/efi/EFI/%{efidir}/grub.cfg %{buildroot}%{_sysconfdir}/%{name}-efi.cfg
 
-install -m 755 %{grubefiname} $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/%{grubefiname}
-install -m 755 %{grubeficdname} $RPM_BUILD_ROOT/boot/efi/EFI/%{efidir}/%{grubeficdname}
+install -m 755 %{grubefiname} %{buildroot}/boot/efi/EFI/%{efidir}/%{grubefiname}
 
-install -m 755 -d $RPM_BUILD_ROOT/boot/efi/EFI/BOOT/
-install -m 755 %{grubefiname} $RPM_BUILD_ROOT/boot/efi/EFI/BOOT/%{grububootname}
+install -m 755 -d %{buildroot}/boot/efi/EFI/BOOT/
+install -m 755 %{grubefiname} %{buildroot}/boot/efi/EFI/BOOT/%{grububootname}
 
 # Make selinux happy with exec stack binaries.
-mkdir ${RPM_BUILD_ROOT}%{_sysconfdir}/prelink.conf.d/
-cat << EOF > ${RPM_BUILD_ROOT}%{_sysconfdir}/prelink.conf.d/grub2.conf
+mkdir %{buildroot}%{_sysconfdir}/prelink.conf.d/
+cat << EOF > %{buildroot}%{_sysconfdir}/prelink.conf.d/%{name}.conf
 # these have execstack, and break under selinux
--b /usr/bin/grub2-script-check
--b /usr/bin/grub2-mkrelpath
--b /usr/bin/grub2-fstest
--b /usr/sbin/grub2-bios-setup
--b /usr/sbin/grub2-probe
--b /usr/sbin/grub2-sparc64-setup
+-b /usr/bin/%{name}-script-check
+-b /usr/bin/%{name}-mkrelpath
+-b /usr/bin/%{name}-fstest
+-b /usr/sbin/%{name}-bios-setup
+-b /usr/sbin/%{name}-probe
+-b /usr/sbin/%{name}-sparc64-setup
 EOF
 
-mv $RPM_BUILD_ROOT%{_infodir}/grub.info $RPM_BUILD_ROOT%{_infodir}/%{name}.info
-mv $RPM_BUILD_ROOT%{_infodir}/grub-dev.info $RPM_BUILD_ROOT%{_infodir}/%{name}-dev.info
-rm $RPM_BUILD_ROOT%{_infodir}/dir
+mv %{buildroot}%{_infodir}/grub.info %{buildroot}%{_infodir}/%{name}.info
+mv %{buildroot}%{_infodir}/grub-dev.info %{buildroot}%{_infodir}/%{name}-dev.info
+rm %{buildroot}%{_infodir}/dir
 
-cd $RPM_BUILD_ROOT
-mkdir -p boot/efi/EFI/%{efidir} boot/grub2
-ln -s /boot/efi/EFI/%{efidir}/grubenv boot/grub2/grubenv
+mkdir -p %{buildroot}/boot/efi/EFI/%{efidir} boot/%{name}
+ln -r -s ../efi/EFI/%{efidir}/grubenv %{buildroot}/boot/%{name}/grubenv
 
 # Don't run debuginfo on all the grub modules and whatnot; it just
 # rejects them, complains, and slows down extraction.
 %global finddebugroot "%{_builddir}/%{?buildsubdir}/debug"
 mkdir -p %{finddebugroot}/usr
-cp -a ${RPM_BUILD_ROOT}/usr/bin %{finddebugroot}/usr/bin
-cp -a ${RPM_BUILD_ROOT}/usr/sbin %{finddebugroot}/usr/sbin
+cp -a %{buildroot}/usr/bin %{finddebugroot}/usr/bin
+cp -a %{buildroot}/usr/sbin %{finddebugroot}/usr/sbin
 
 %global dip RPM_BUILD_ROOT=%{finddebugroot} %{__debug_install_post}
 %define __debug_install_post ( %{dip}                               \
@@ -199,6 +199,11 @@ cp -a ${RPM_BUILD_ROOT}/usr/sbin %{finddebugroot}/usr/sbin
         %{buildroot}/usr/lib/debug/                                 \
     cp -al %{finddebugroot}/usr/src/debug/                          \\\
         %{buildroot}/usr/src/debug/ )
+
+
+%clean
+rm -rf %{buildroot}
+
 
 %post tools
 if [ "$1" = 1 ]; then
@@ -212,6 +217,7 @@ if [ "$1" = 0 ]; then
     /sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
 fi
 
+
 %files efi
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/%{name}-efi.cfg
@@ -219,7 +225,7 @@ fi
 %attr(0755,root,root)/boot/efi/EFI/BOOT/*
 %ghost %config(noreplace) /boot/efi/EFI/%{efidir}/grub.cfg
 %doc COPYING
-/boot/grub2/grubenv
+/boot/%{name}/grubenv
 # I know 0700 seems strange, but it lives on FAT so that's what it'll
 # get no matter what we do.
 %config(noreplace) %ghost %attr(0700,root,root)/boot/efi/EFI/%{efidir}/grubenv
@@ -232,7 +238,6 @@ fi
 %defattr(-,root,root,-)
 %dir %{_libdir}/grub/
 %dir %{_datarootdir}/grub/
-%dir %{_datarootdir}/grub/themes
 %{_datarootdir}/grub/*
 %{_sbindir}/%{name}-bios-setup
 %{_sbindir}/%{name}-install
@@ -263,7 +268,7 @@ fi
 %{_bindir}/%{name}-script-check
 %{_bindir}/%{name}-syslinux2cfg
 %{_sysconfdir}/bash_completion.d/grub
-%{_sysconfdir}/prelink.conf.d/grub2.conf
+%{_sysconfdir}/prelink.conf.d/%{name}.conf
 %attr(0700,root,root) %dir %{_sysconfdir}/grub.d
 %config %{_sysconfdir}/grub.d/??_*
 %{_sysconfdir}/grub.d/README
@@ -276,3 +281,6 @@ fi
 %doc THANKS TODO
 %doc grub.html
 %doc grub-dev.html docs/font_char_metrics.png
+# locales
+%dir %{_datarootdir}/locale
+%{_datarootdir}/locale/*
