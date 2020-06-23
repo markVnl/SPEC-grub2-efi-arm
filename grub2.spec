@@ -19,18 +19,18 @@
 %global githash na
 %undefine _missing_build_ids_terminate_build
 
-Name:           grub2
-Epoch:          1
-Version:        2.04
-Release:        %mkrel 2
-Summary:        Bootloader with support for Linux, Multiboot and more
+Name:          grub2
+Epoch:         1
+Version:       2.04
+Release:       %mkrel 2
+Summary:       Bootloader with support for Linux, Multiboot and more
 
-Group:          System Environment/Base
-License:        GPLv3+
-URL:            http://www.gnu.org/software/grub/
-Source0:        https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
-Source1:        unifont-5.1.20080820.pcf.gz
-Source2:        custom.cfg
+Group:         System Environment/Base
+License:       GPLv3+
+URL:           http://www.gnu.org/software/grub/
+Source0:       https://ftp.gnu.org/gnu/grub/grub-%{version}.tar.xz
+Source1:       unifont-5.1.20080820.pcf.gz
+Source2:       custom.cfg
 
 # Fedora Patches
 Patch0011:     0011-Honor-a-symlink-when-generating-configuration-by-gru.patch
@@ -109,9 +109,11 @@ bootloader with modular architecture.  It support rich varietyof kernel formats,
 file systems, computer architectures and hardware devices.  This subpackage
 provides common for support of all platforms.
 
+
 %prep
 %autosetup -p1 -n grub-%{version}
 cp %{SOURCE1} unifont.pcf.gz
+
 
 %build
 ./autogen.sh
@@ -124,7 +126,7 @@ cp %{SOURCE1} unifont.pcf.gz
         --disable-grub-mount   \
         --disable-werror
 
-make %{?_smp_mflags}
+%{make_build} %{?_smp_mflags}
 
 sed -i -e 's,(grub),(%{name}),g' \
    -e 's,grub.info,%{name}.info,g' \
@@ -140,19 +142,27 @@ sed -i -e 's,/boot/grub/,/boot/%{name}/,g' \
    -e 's,\([^-]\)grub-\([a-z]\),\1%{name}-\2,g' \
    grub.html
 
+
 %install
-make DESTDIR=$RPM_BUILD_ROOT install
-find $RPM_BUILD_ROOT -iname "*.module" -exec chmod a-x {} \;
+%{make_build} DESTDIR=%{buildroot} install
+find %{buildroot} -iname "*.module" -exec chmod a-x {} \;
 
 # Ghost config file
-install -m 755 -d $RPM_BUILD_ROOT/boot/%{name}
-install -m 644 -D %{SOURCE2} $RPM_BUILD_ROOT/boot/%{name}/custom.cfg
-touch $RPM_BUILD_ROOT//boot/%{name}/grub.cfg
-ln -s ../boot/%{name}/grub.cfg $RPM_BUILD_ROOT%{_sysconfdir}/%{name}-efi.cfg
 
-mv $RPM_BUILD_ROOT%{_infodir}/grub.info $RPM_BUILD_ROOT%{_infodir}/%{name}.info
-mv $RPM_BUILD_ROOT%{_infodir}/grub-dev.info $RPM_BUILD_ROOT%{_infodir}/%{name}-dev.info
-rm $RPM_BUILD_ROOT%{_infodir}/dir
+install -m 755 -d %{buildroot}/boot/%{name}
+touch %{buildroot}//boot/%{name}/grub.cfg
+ln -s ../boot/%{name}/grub.cfg %{buildroot}%{_sysconfdir}/%{name}-efi.cfg
+
+# Custom config for console colors
+install -m 644 -D %{SOURCE2} %{buildroot}/boot/%{name}/custom.cfg
+
+mv %{buildroot}%{_infodir}/grub.info %{buildroot}%{_infodir}/%{name}.info
+mv %{buildroot}%{_infodir}/grub-dev.info %{buildroot}%{_infodir}/%{name}-dev.info
+rm %{buildroot}%{_infodir}/dir
+
+
+%clean
+rm -rf %{buildroot}
 
 
 %post common
@@ -166,6 +176,7 @@ if [ "$1" = 0 ]; then
    /sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}.info.gz || :
    /sbin/install-info --delete --info-dir=%{_infodir} %{_infodir}/%{name}-dev.info.gz || :
 fi
+
 
 %files efi
 %doc COPYING
