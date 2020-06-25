@@ -20,7 +20,7 @@
 
 
 Name:          grub2
-Epoch:         1
+Epoch:         2
 Version:       2.04
 Release:       1%{?dist}
 Summary:       Bootloader with support for Linux, Multiboot and more
@@ -65,6 +65,7 @@ BuildRequires: /usr/lib64/crt1.o glibc-static
 # ppc64 builds need the ppc crt1.o
 BuildRequires: /usr/lib/crt1.o glibc-static
 %endif
+BuildRequires: gcc
 BuildRequires: autoconf automake autogen device-mapper-devel
 BuildRequires: freetype-devel gettext-devel git
 BuildRequires: texinfo
@@ -114,7 +115,11 @@ provides support for rebuilding your own grub.efi on EFI systems.
 Summary:       Support tools for GRUB.
 Group:         System Environment/Base
 Requires:      gettext os-prober which file system-logos
+%if 0%{?rhel} == 7
+Requires:      grubby
+%else
 Requires:      grubby-deprecated
+%endif
 Provides:      %{name}-common = %{epoch}:%{version}-%{release}
 Provides:      %{name}-tools-minimal = %{epoch}:%{version}-%{release}
 
